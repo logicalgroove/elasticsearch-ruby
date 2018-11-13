@@ -309,7 +309,6 @@ module Elasticsearch
           # Stops the cluster
           #
           # Fetches the PID numbers from "Nodes Info" API and terminates 
-            ing nodes.
           #
           # @example Stop the default cluster
           #      Elasticsearch::Extensions::Test::Cluster::Cluster.new.stop

@@ -452,72 +452,8 @@ module Elasticsearch
           #
           def __determine_version
             path_to_lib = File.dirname(arguments[:command]) + '/../lib/'
-            version = if arguments[:version]
-              arguments[:version]
-            elsif File.exist?(path_to_lib) && !(jar = Dir.entries(path_to_lib).select { |f| f =~ /^elasticsearch\-\d/ }.first).nil?
-              __log "Determining version from [#{jar}]" if ENV['DEBUG']
-              if m = jar.match(/elasticsearch(-?.*?)\-(\d+\.\d+\.\d+).*/)
-                m[2]
-              else
-                raise RuntimeError, "Cannot determine Elasticsearch version from jar [#{jar}]"
-              end
-            else
-              __log "[!] Cannot find Elasticsearch .jar from path to command [#{arguments[:command]}], using `#{arguments[:command]} --version`" if ENV['DEBUG']
-
-              unless File.exist? arguments[:command]
-                __log "File [#{arguments[:command]}] does not exists, checking full path by `which`: ", :print if ENV['DEBUG']
-
-                begin
-                  full_path = `which #{arguments[:command]}`.strip
-                  __log "#{full_path.inspect}\n", :print if ENV['DEBUG']
-                rescue Exception => e
-                  raise RuntimeError, "Cannot determine full path to [#{arguments[:command]}] with 'which'"
-                end
-
-                if full_path.empty?
-                  raise Errno::ENOENT, "Cannot find Elasticsearch launch script from [#{arguments[:command]}] -- did you pass a correct path?"
-                end
-              end
-
-              output = ''
-
-              begin
-                # First, try the new `--version` syntax...
-                __log "Running [#{arguments[:command]} --version] to determine version" if ENV['DEBUG']
-                rout, wout = IO.pipe
-                pid = Process.spawn("#{arguments[:command]} --version", out: wout)
-
-                Timeout::timeout(arguments[:timeout_version]) do
-                  Process.wait(pid)
-                  wout.close unless wout.closed?
-                  output = rout.read unless rout.closed?
-                  rout.close unless rout.closed?
-                end
-              rescue Timeout::Error
-                # ...else, the old `-v` syntax
-                __log "Running [#{arguments[:command]} -v] to determine version" if ENV['DEBUG']
-                output = `#{arguments[:command]} -v`
-              ensure
-                if pid
-                  Process.kill('INT', pid) rescue Errno::ESRCH # Most likely the process has terminated already
-                end
-                wout.close unless wout.closed?
-                rout.close unless rout.closed?
-              end
-
-              STDERR.puts "> #{output}" if ENV['DEBUG']
-
-              if output.empty?
-                raise RuntimeError, "Cannot determine Elasticsearch version from [#{arguments[:command]} --version] or [#{arguments[:command]} -v]"
-              end
-
-              if m = output.match(/Version: (\d\.\d.\d).*,/)
-                m[1]
-              else
-                raise RuntimeError, "Cannot determine Elasticsearch version from elasticsearch --version output [#{output}]"
-              end
-            end
-
+            version = arguments[:version]
+            
             case version
               when /^0\.90.*/
                 '0.90'

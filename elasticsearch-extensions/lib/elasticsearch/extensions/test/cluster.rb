@@ -452,7 +452,7 @@ module Elasticsearch
           #
           def __determine_version
             path_to_lib = File.dirname(arguments[:command]) + '/../lib/'
-            version = ENV['ES_VERSION']
+            version = arguments[:version]
             
             case version
               when /^0\.90.*/
